@@ -29,3 +29,20 @@ def commit_message(sha: str) -> str:
 
 def commit_diff(sha: str, max_chars: int = 6000) -> str:
     return scrub(_git("show", "--format=", "--patch", sha))[:max_chars]
+
+
+from pathlib import Path
+
+def git_dir() -> Path:
+    """The repo's .git folder (works from any subfolder, worktrees too)."""
+    return Path(_git("rev-parse", "--absolute-git-dir"))
+
+
+def hooks_dir() -> Path:
+    """Where this repo's hooks live (respects a custom core.hooksPath)."""
+    return Path(_git("rev-parse", "--git-path", "hooks")).resolve()
+
+
+def is_merge(sha: str) -> bool:
+    parts = _git("rev-list", "--parents", "-n", "1", sha).split()
+    return len(parts) > 2  # sha + 2 or more parents
