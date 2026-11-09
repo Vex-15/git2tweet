@@ -2,7 +2,7 @@
 
 Turn your git commits into tweet drafts. You approve every one before it goes out.
 
-![demo](docs/demo.gif)
+![demo](https://raw.githubusercontent.com/Vex-15/git2tweet/main/docs/demo.gif)
 
 ## Install
 
