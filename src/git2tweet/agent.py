@@ -1,12 +1,10 @@
 import json
-import os
 import webbrowser
 from typing import Annotated, TypedDict
 from urllib.parse import urlencode
 
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.tools import tool
-from langchain_groq import ChatGroq
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.message import add_messages
@@ -14,6 +12,7 @@ from langgraph.prebuilt import ToolNode, tools_condition
 from langgraph.types import Command, interrupt
 
 from . import repo, store
+from .llm import make_llm
 
 SYSTEM = """You write tweets for a developer who builds in public.
 Look at the recent commits, pick the most tweet-worthy one, read its diff,
@@ -69,9 +68,7 @@ def after_approve(state: State):
 
 
 def build_graph():
-    llm = ChatGroq(
-        model=os.environ.get("GROQ_MODEL", "openai/gpt-oss-120b")
-    ).bind_tools(TOOLS)
+    llm = make_llm().bind_tools(TOOLS)
 
     def agent(state: State):
         reply = llm.invoke([SystemMessage(SYSTEM)] + state["messages"])
