@@ -71,8 +71,9 @@ Override per run with `GIT2TWEET_PROVIDER` and `GIT2TWEET_MODEL` environment var
 ## Privacy
 
 - Your commit message and diff are sent to the provider you choose.
-- Known secret patterns (API keys, tokens, `password=...`) are redacted first. This is
-  best effort, so use Ollama for sensitive repos.
+- Known secret patterns (API keys, tokens, private keys, passwords in connection URLs)
+  are redacted first, and diffs of files like `.env`, `*.pem` and `*.key` are never sent.
+  This is best effort, so use Ollama for sensitive repos.
 - No telemetry.
 
 ## Contributing
