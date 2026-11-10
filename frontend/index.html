@@ -1,0 +1,650 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Git2Tweet — Turn your commits into tweets</title>
+<meta name="description" content="Git2Tweet reads your commit and its diff, writes the first draft, and waits for your approval. Nothing is posted until you say so.">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f3f6fc" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#05070e" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+
+<script>
+  (function () {
+    var root = document.documentElement;
+    try {
+      var saved = localStorage.getItem("g2t-theme");
+      if (saved === "light" || saved === "dark") root.setAttribute("data-theme", saved);
+    } catch (error) { /* storage unavailable */ }
+    root.classList.add("js");
+  })();
+</script>
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Git2Tweet">
+<meta property="og:title" content="Git2Tweet — Turn your commits into tweets">
+<meta property="og:description" content="Git2Tweet reads your commit and its diff, writes the first draft, and waits for your approval. Nothing is posted until you say so.">
+<!-- These URLs assume the GitHub Pages project URL; update them if you use a custom domain. -->
+<meta property="og:url" content="https://vex-15.github.io/git2tweet/">
+<meta property="og:image" content="https://vex-15.github.io/git2tweet/assets/og.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Git2Tweet — Turn your commits into tweets.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Git2Tweet — Turn your commits into tweets">
+<meta name="twitter:description" content="Git2Tweet reads your commit and its diff, writes the first draft, and waits for your approval. Nothing is posted until you say so.">
+<meta name="twitter:image" content="https://vex-15.github.io/git2tweet/assets/og.png">
+<meta name="twitter:image:alt" content="Git2Tweet — Turn your commits into tweets.">
+
+<link rel="stylesheet" href="styles.css">
+</head>
+<body id="top">
+<a class="skip-link" href="#main">Skip to content</a>
+
+<div class="ambient" aria-hidden="true">
+  <span class="orb orb-a"></span>
+  <span class="orb orb-b"></span>
+</div>
+
+<div class="site-frame">
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="#top" aria-label="Git2Tweet home">
+        <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true">
+          <rect width="28" height="28" rx="7" fill="var(--accent)"></rect>
+          <path d="M8 9.5 12.5 14 8 18.5" fill="none" stroke="var(--accent-ink)" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"></path>
+          <path d="M14.5 18.5H20" fill="none" stroke="var(--accent-ink)" stroke-width="2.1" stroke-linecap="round"></path>
+        </svg>
+        <span>git2tweet</span>
+      </a>
+
+      <nav class="nav-main" aria-label="Primary">
+        <a href="#how">How it works</a>
+        <a href="#features">Features</a>
+        <a href="#install">Install</a>
+        <a href="#privacy">Privacy</a>
+        <a href="#faq">FAQ</a>
+      </nav>
+
+      <div class="header-actions">
+        <a class="gh-stars" data-gh-link href="https://github.com/Vex-15/git2tweet" target="_blank" rel="noopener noreferrer" aria-label="GitHub repository" title="GitHub repository">
+          <svg viewBox="0 0 16 16" aria-hidden="true" fill="currentColor">
+            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"></path>
+          </svg>
+          <span class="gh-stars-value" data-gh-stars>GitHub</span>
+        </a>
+
+        <button class="icon-btn theme-toggle" data-theme-toggle type="button" aria-label="Toggle color theme" title="Toggle color theme">
+          <svg class="moon-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z"></path>
+          </svg>
+          <svg class="sun-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="4"></circle>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"></path>
+          </svg>
+        </button>
+
+        <a class="header-install" href="#install">Install</a>
+      </div>
+    </div>
+    <div class="scroll-progress" aria-hidden="true"><span data-progress></span></div>
+  </header>
+
+  <main id="main">
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="container hero-inner">
+        <p class="hero-kicker"><span class="kicker-dot" aria-hidden="true"></span>MIT licensed · Python 3.10+</p>
+        <h1 id="hero-title">Turn your commits into <span class="mark">tweets.</span></h1>
+        <p class="lede">Git2Tweet reads your commit and its diff, writes the first draft, and waits for your approval. Nothing is posted until you say so.</p>
+
+        <div class="install-box">
+          <code class="install-cmd" id="cmd-hero"><span class="ps1" aria-hidden="true" data-no-copy>$ </span>uv tool install git2tweet</code>
+          <button class="copy-btn" type="button" data-copy="#cmd-hero" aria-label="Copy install command">
+            <svg class="copy-copy" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="11" height="11" rx="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            <svg class="copy-check" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m5 12 4 4L19 6"></path>
+            </svg>
+            <span class="copy-label">Copy</span>
+          </button>
+        </div>
+
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="https://github.com/Vex-15/git2tweet" target="_blank" rel="noopener noreferrer">
+            <svg viewBox="0 0 16 16" aria-hidden="true" fill="currentColor">
+              <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"></path>
+            </svg>
+            View on GitHub
+          </a>
+          <a class="btn btn-secondary" href="https://pypi.org/project/git2tweet/" target="_blank" rel="noopener noreferrer">
+            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z"></path>
+              <path d="m4 7.5 8 4.5 8-4.5M12 12v9"></path>
+            </svg>
+            PyPI
+          </a>
+        </div>
+
+        <div class="demo-wrap">
+          <figure class="demo">
+            <div class="window-bar">
+              <div class="window-dots" aria-hidden="true"><span></span><span></span><span></span></div>
+              <span class="window-title">git tweet</span>
+            </div>
+            <div class="demo-media">
+              <img src="assets/demo.gif" width="800" height="450" alt="Screen recording of Git2Tweet drafting a tweet from a commit and opening X with the text prefilled." loading="eager" decoding="async" fetchpriority="high">
+            </div>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="how" aria-labelledby="how-title">
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="section-index" aria-hidden="true">01</span>
+          <h2 id="how-title">How it works</h2>
+        </div>
+
+        <div class="steps" data-stagger>
+          <article class="step reveal">
+            <span class="step-num" aria-hidden="true">01</span>
+            <h3>Commit as usual.</h3>
+            <p>Nothing in your workflow changes.</p>
+          </article>
+          <article class="step reveal">
+            <span class="step-num" aria-hidden="true">02</span>
+            <h3>Run <code>git tweet</code>.</h3>
+            <p>An agent reads the message and the diff, and skips trivial changes.</p>
+          </article>
+          <article class="step reveal">
+            <span class="step-num" aria-hidden="true">03</span>
+            <h3>Approve.</h3>
+            <p>Accept, edit, or reject the draft. X opens with the text prefilled, and you press Post.</p>
+          </article>
+        </div>
+
+        <div class="flow reveal">
+          <svg class="flow-svg flow-wide" viewBox="0 0 1060 136" role="img" aria-labelledby="flow-title flow-desc" xmlns="http://www.w3.org/2000/svg">
+            <title id="flow-title">The Git2Tweet flow</title>
+            <desc id="flow-desc">A commit goes to an agent that reads the diff, then to a draft or skip decision, then to your approval, then X opens with the tweet prefilled.</desc>
+            <defs>
+              <marker id="arrow-wide" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                <path d="M0 0 10 5 0 10Z" fill="var(--accent)"></path>
+              </marker>
+            </defs>
+            <g>
+              <rect class="node" x="0" y="20" width="188" height="96" rx="12"></rect>
+              <text class="node-kicker" x="16" y="46">01</text>
+              <text class="node-title" x="16" y="73">Commit</text>
+              <text class="node-sub" x="16" y="95">as usual</text>
+            </g>
+            <line class="arrow" x1="191" y1="68" x2="211" y2="68" marker-end="url(#arrow-wide)"></line>
+            <g>
+              <rect class="node" x="218" y="20" width="188" height="96" rx="12"></rect>
+              <text class="node-kicker" x="234" y="46">02</text>
+              <text class="node-title" x="234" y="73">Agent reads diff</text>
+              <text class="node-sub" x="234" y="95">message + diff</text>
+            </g>
+            <line class="arrow" x1="409" y1="68" x2="429" y2="68" marker-end="url(#arrow-wide)"></line>
+            <g>
+              <rect class="node" x="436" y="20" width="188" height="96" rx="12"></rect>
+              <text class="node-kicker" x="452" y="46">03</text>
+              <text class="node-title" x="452" y="73">Draft or skip</text>
+              <text class="node-sub" x="452" y="95">trivial edits skipped</text>
+            </g>
+            <line class="arrow" x1="627" y1="68" x2="647" y2="68" marker-end="url(#arrow-wide)"></line>
+            <g>
+              <rect class="node" x="654" y="20" width="188" height="96" rx="12"></rect>
+              <text class="node-kicker" x="670" y="46">04</text>
+              <text class="node-title" x="670" y="73">You approve</text>
+              <text class="node-sub" x="670" y="95">accept · edit · reject</text>
+            </g>
+            <line class="arrow" x1="845" y1="68" x2="865" y2="68" marker-end="url(#arrow-wide)"></line>
+            <g>
+              <rect class="node node--accent" x="872" y="20" width="188" height="96" rx="12"></rect>
+              <text class="node-kicker" x="888" y="46">05</text>
+              <text class="node-title" x="888" y="73">X opens prefilled</text>
+              <text class="node-sub" x="888" y="95">you press Post</text>
+            </g>
+          </svg>
+
+          <svg class="flow-svg flow-mobile" viewBox="0 0 360 590" role="img" aria-labelledby="flow-title-m flow-desc-m" xmlns="http://www.w3.org/2000/svg">
+            <title id="flow-title-m">The Git2Tweet flow</title>
+            <desc id="flow-desc-m">A commit goes to an agent that reads the diff, then to a draft or skip decision, then to your approval, then X opens with the tweet prefilled.</desc>
+            <defs>
+              <marker id="arrow-mobile" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                <path d="M0 0 10 5 0 10Z" fill="var(--accent)"></path>
+              </marker>
+            </defs>
+            <g>
+              <rect class="node" x="10" y="0" width="340" height="86" rx="12"></rect>
+              <text class="node-kicker" x="28" y="26">01</text>
+              <text class="node-title" x="28" y="52">Commit</text>
+              <text class="node-sub" x="28" y="72">as usual</text>
+            </g>
+            <line class="arrow" x1="180" y1="89" x2="180" y2="115" marker-end="url(#arrow-mobile)"></line>
+            <g>
+              <rect class="node" x="10" y="120" width="340" height="86" rx="12"></rect>
+              <text class="node-kicker" x="28" y="146">02</text>
+              <text class="node-title" x="28" y="172">Agent reads diff</text>
+              <text class="node-sub" x="28" y="192">message + diff</text>
+            </g>
+            <line class="arrow" x1="180" y1="209" x2="180" y2="235" marker-end="url(#arrow-mobile)"></line>
+            <g>
+              <rect class="node" x="10" y="240" width="340" height="86" rx="12"></rect>
+              <text class="node-kicker" x="28" y="266">03</text>
+              <text class="node-title" x="28" y="292">Draft or skip</text>
+              <text class="node-sub" x="28" y="312">trivial edits skipped</text>
+            </g>
+            <line class="arrow" x1="180" y1="329" x2="180" y2="355" marker-end="url(#arrow-mobile)"></line>
+            <g>
+              <rect class="node" x="10" y="360" width="340" height="86" rx="12"></rect>
+              <text class="node-kicker" x="28" y="386">04</text>
+              <text class="node-title" x="28" y="412">You approve</text>
+              <text class="node-sub" x="28" y="432">accept · edit · reject</text>
+            </g>
+            <line class="arrow" x1="180" y1="449" x2="180" y2="475" marker-end="url(#arrow-mobile)"></line>
+            <g>
+              <rect class="node node--accent" x="10" y="480" width="340" height="86" rx="12"></rect>
+              <text class="node-kicker" x="28" y="506">05</text>
+              <text class="node-title" x="28" y="532">X opens prefilled</text>
+              <text class="node-sub" x="28" y="552">you press Post</text>
+            </g>
+          </svg>
+        </div>
+
+        <div class="shots" data-stagger>
+          <figure class="shot reveal">
+            <div class="window-bar">
+              <div class="window-dots" aria-hidden="true"><span></span><span></span><span></span></div>
+              <span class="window-title">git tweet</span>
+            </div>
+            <img src="assets/draft.png" width="843" height="249" alt="Terminal showing a tweet draft generated by Git2Tweet and the approval prompt." loading="lazy" decoding="async">
+          </figure>
+          <figure class="shot reveal">
+            <div class="window-bar">
+              <div class="window-dots" aria-hidden="true"><span></span><span></span><span></span></div>
+              <span class="window-title">X compose</span>
+            </div>
+            <img src="assets/x-prefilled.png" width="523" height="297" alt="X compose box with the generated tweet text prefilled, before pressing Post." loading="lazy" decoding="async">
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section--alt" id="features" aria-labelledby="features-title">
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="section-index" aria-hidden="true">02</span>
+          <h2 id="features-title">Features</h2>
+        </div>
+
+        <div class="feature-grid" data-stagger>
+          <article class="feature reveal">
+            <div class="icon-tile">
+              <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5Z"></path>
+                <path d="M14 3v5h5M9 12h6M9 16h4"></path>
+              </svg>
+            </div>
+            <h3>Reads the diff, not just the message.</h3>
+            <p>Drafts describe what you actually changed.</p>
+          </article>
+
+          <article class="feature reveal">
+            <div class="icon-tile">
+              <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 5h16l-6 7v6l-4 2v-8L4 5Z"></path>
+              </svg>
+            </div>
+            <h3>Skips the noise.</h3>
+            <p>Typo fixes and tiny edits are skipped, with a reason. Override with <code>--no-skip</code>.</p>
+          </article>
+
+          <article class="feature reveal">
+            <div class="icon-tile">
+              <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="9"></circle>
+                <path d="m8.5 12 2.5 2.5L16 9.5"></path>
+              </svg>
+            </div>
+            <h3>You stay in control.</h3>
+            <p>Every tweet needs your approval first.</p>
+          </article>
+
+          <article class="feature reveal">
+            <div class="icon-tile">
+              <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="8" cy="15" r="4"></circle>
+                <path d="m11 12 8-8M17 4l3 3M14 7l3 3"></path>
+                <path d="m3 3 18 18"></path>
+              </svg>
+            </div>
+            <h3>No X credentials, no paid API.</h3>
+            <p>It opens a prefilled tweet, so you press Post yourself.</p>
+          </article>
+
+          <article class="feature reveal">
+            <div class="icon-tile">
+              <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="6" cy="5" r="2.5"></circle>
+                <circle cx="6" cy="19" r="2.5"></circle>
+                <circle cx="18" cy="8" r="2.5"></circle>
+                <path d="M6 7.5v9M18 10.5c0 3-2.5 4.5-5 4.5H8"></path>
+              </svg>
+            </div>
+            <h3>Works offline from git.</h3>
+            <p>It reads your local repo, so no GitHub token is needed and private repos work.</p>
+          </article>
+
+          <article class="feature reveal">
+            <div class="icon-tile">
+              <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="7" y="7" width="10" height="10" rx="2"></rect>
+                <path d="M9 3v4M15 3v4M9 17v4M15 17v4M3 9h4M3 15h4M17 9h4M17 15h4"></path>
+              </svg>
+            </div>
+            <h3>Your choice of model.</h3>
+            <p>Groq by default, or Ollama to keep everything on your machine.</p>
+          </article>
+
+          <article class="feature reveal">
+            <div class="icon-tile">
+              <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 3 5 6v6c0 4.5 3 7.5 7 9 4-1.5 7-4.5 7-9V6l-7-3Z"></path>
+                <path d="m9 12 2 2 4-4"></path>
+              </svg>
+            </div>
+            <h3>Secret scrubbing.</h3>
+            <p>Keys, tokens, private keys and connection-string passwords are redacted, and <code>.env</code> and key files are never sent.</p>
+          </article>
+
+          <article class="feature reveal">
+            <div class="icon-tile">
+              <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 9a6 6 0 0 0-12 0c0 6-2 7-2 7h16s-2-1-2-7Z"></path>
+                <path d="M10.3 20a2 2 0 0 0 3.4 0"></path>
+              </svg>
+            </div>
+            <h3>Optional commit reminder.</h3>
+            <p><code>git2tweet init</code> adds a hook that nudges you after each commit.</p>
+          </article>
+
+          <article class="feature reveal">
+            <div class="icon-tile">
+              <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="16" rx="2"></rect>
+                <path d="m7 9 3 3-3 3M13 15h4"></path>
+              </svg>
+            </div>
+            <h3>Short commands.</h3>
+            <p><code>git tweet</code> or <code>g2t</code>.</p>
+          </article>
+
+          <article class="feature feature--wide reveal">
+            <div class="icon-tile">
+              <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 6c-2-1.5-4.5-2-7-2v14c2.5 0 5 .5 7 2 2-1.5 4.5-2 7-2V4c-2.5 0-5 .5-7 2Z"></path>
+                <path d="M12 6v14"></path>
+              </svg>
+            </div>
+            <div>
+              <h3>Open source, no telemetry.</h3>
+              <p>MIT licensed.</p>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="install" aria-labelledby="install-title">
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="section-index" aria-hidden="true">03</span>
+          <h2 id="install-title">Install</h2>
+        </div>
+
+        <div class="install-grid">
+          <div class="tabs reveal">
+            <div class="tablist" role="tablist" aria-label="Install method">
+              <button class="tab" type="button" role="tab" id="tab-uv" aria-selected="true" aria-controls="panel-uv" tabindex="0">uv</button>
+              <button class="tab" type="button" role="tab" id="tab-pipx" aria-selected="false" aria-controls="panel-pipx" tabindex="-1">pipx</button>
+              <button class="tab" type="button" role="tab" id="tab-pip" aria-selected="false" aria-controls="panel-pip" tabindex="-1">pip</button>
+            </div>
+
+            <div class="tabpanel" id="panel-uv" role="tabpanel" aria-labelledby="tab-uv" tabindex="0">
+              <div class="code-block">
+                <div class="code-head">
+                  <span class="code-title">terminal</span>
+                  <button class="copy-btn" type="button" data-copy="#cmd-uv" aria-label="Copy uv install command">
+                    <svg class="copy-copy" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    <svg class="copy-check" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4L19 6"></path></svg>
+                    <span class="copy-label">Copy</span>
+                  </button>
+                </div>
+                <pre><code id="cmd-uv"><span class="line"><span class="ps1" aria-hidden="true" data-no-copy>$ </span>uv tool install git2tweet</span><span class="line line--comment" data-no-copy># or: pipx install git2tweet</span></code></pre>
+              </div>
+            </div>
+
+            <div class="tabpanel" id="panel-pipx" role="tabpanel" aria-labelledby="tab-pipx" tabindex="0" hidden>
+              <div class="code-block">
+                <div class="code-head">
+                  <span class="code-title">terminal</span>
+                  <button class="copy-btn" type="button" data-copy="#cmd-pipx" aria-label="Copy pipx install command">
+                    <svg class="copy-copy" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    <svg class="copy-check" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4L19 6"></path></svg>
+                    <span class="copy-label">Copy</span>
+                  </button>
+                </div>
+                <pre><code id="cmd-pipx"><span class="line"><span class="ps1" aria-hidden="true" data-no-copy>$ </span>pipx install git2tweet</span></code></pre>
+              </div>
+            </div>
+
+            <div class="tabpanel" id="panel-pip" role="tabpanel" aria-labelledby="tab-pip" tabindex="0" hidden>
+              <div class="code-block">
+                <div class="code-head">
+                  <span class="code-title">terminal</span>
+                  <button class="copy-btn" type="button" data-copy="#cmd-pip" aria-label="Copy pip install command">
+                    <svg class="copy-copy" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    <svg class="copy-check" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4L19 6"></path></svg>
+                    <span class="copy-label">Copy</span>
+                  </button>
+                </div>
+                <pre><code id="cmd-pip"><span class="line"><span class="ps1" aria-hidden="true" data-no-copy>$ </span>pip install git2tweet</span></code></pre>
+              </div>
+            </div>
+
+            <div class="code-block config-block">
+              <div class="code-head">
+                <span class="code-title">terminal</span>
+                <button class="copy-btn" type="button" data-copy="#cmd-config" aria-label="Copy config command">
+                  <svg class="copy-copy" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  <svg class="copy-check" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4L19 6"></path></svg>
+                  <span class="copy-label">Copy</span>
+                </button>
+              </div>
+              <pre><code id="cmd-config"><span class="line"><span class="ps1" aria-hidden="true" data-no-copy>$ </span>git2tweet config</span><span class="line line--comment" data-no-copy># choose a provider, paste your API key (once)</span></code></pre>
+            </div>
+
+            <ul class="notes">
+              <li><strong>Needs:</strong> Python 3.10+, git, and an API key (a free Groq key works) or Ollama.</li>
+              <li><strong>Local models:</strong> <code>uv tool install "git2tweet[ollama]"</code>, then <code>git2tweet config</code>.</li>
+              <li><strong>Reminder hook:</strong> <code>git2tweet init</code> (undo with <code>git2tweet init --remove</code>).</li>
+              <li><strong>Update:</strong> <code>uv tool upgrade git2tweet</code>.</li>
+              <li><strong>Uninstall:</strong> <code>git2tweet init --remove</code> in each repo, then <code>uv tool uninstall git2tweet</code>, delete the config folder, and revoke your API key.</li>
+            </ul>
+          </div>
+
+          <div class="quickstart-wrap reveal">
+            <p class="quickstart-label">Then, in any git repo:</p>
+            <div class="code-block">
+              <div class="code-head">
+                <span class="code-title">quick start</span>
+                <button class="copy-btn" type="button" data-copy="#quickstart-code" aria-label="Copy quick start commands">
+                  <svg class="copy-copy" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  <svg class="copy-check" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4L19 6"></path></svg>
+                  <span class="copy-label">Copy</span>
+                </button>
+              </div>
+              <pre><code id="quickstart-code"><span class="line"><span class="ps1" aria-hidden="true" data-no-copy>$ </span>git commit -m <span class="str">"feat: add retry with backoff to the webhook handler"</span></span>
+<span class="line"><span class="ps1" aria-hidden="true" data-no-copy>$ </span>git tweet</span></code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="privacy" aria-labelledby="privacy-title">
+      <div class="container">
+        <div class="privacy-panel reveal">
+          <div class="privacy-copy">
+            <span class="section-index" aria-hidden="true">04</span>
+            <h2 id="privacy-title">What gets sent to the AI model?</h2>
+            <p>The commit message and diff, after known secrets are redacted. Files like <code>.env</code>, <code>*.pem</code> and <code>*.key</code> are excluded. Redaction is best effort, so use Ollama for sensitive repos.</p>
+            <span class="privacy-badge">
+              <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v6c0 4.5 3 7.5 7 9 4-1.5 7-4.5 7-9V6l-7-3Z"></path><path d="m9 12 2 2 4-4"></path></svg>
+              No telemetry.
+            </span>
+          </div>
+          <div class="excluded">
+            <p class="excluded-label">
+              <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path></svg>
+              Never sent
+            </p>
+            <ul>
+              <li><code>.env</code></li>
+              <li><code>*.pem</code></li>
+              <li><code>*.key</code></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section--alt" id="faq" aria-labelledby="faq-title">
+      <div class="container">
+        <div class="faq-layout">
+          <div class="faq-intro reveal">
+            <span class="section-index" aria-hidden="true">05</span>
+            <h2 id="faq-title">FAQ</h2>
+            <p class="faq-note">Suggestions are welcome on <a href="https://github.com/Vex-15/git2tweet/issues" target="_blank" rel="noopener noreferrer">GitHub.</a></p>
+          </div>
+
+          <div class="faq-list" data-stagger>
+            <details class="faq-item reveal">
+              <summary><span>Does it post for me?</span><span class="faq-toggle" aria-hidden="true"></span></summary>
+              <div class="faq-answer"><p>No. It opens X with the draft prefilled and you press Post.</p></div>
+            </details>
+            <details class="faq-item reveal">
+              <summary><span>Do I need an X API key or a paid plan?</span><span class="faq-toggle" aria-hidden="true"></span></summary>
+              <div class="faq-answer"><p>No. It never touches your X account.</p></div>
+            </details>
+            <details class="faq-item reveal">
+              <summary><span>What gets sent to the AI model?</span><span class="faq-toggle" aria-hidden="true"></span></summary>
+              <div class="faq-answer"><p>The commit message and diff, after known secrets are redacted. Files like <code>.env</code>, <code>*.pem</code> and <code>*.key</code> are excluded. Redaction is best effort, so use Ollama for sensitive repos.</p></div>
+            </details>
+            <details class="faq-item reveal">
+              <summary><span>Which models work?</span><span class="faq-toggle" aria-hidden="true"></span></summary>
+              <div class="faq-answer"><p>Groq (default) and Ollama. Both are set with <code>git2tweet config</code>.</p></div>
+            </details>
+            <details class="faq-item reveal">
+              <summary><span>What does it cost?</span><span class="faq-toggle" aria-hidden="true"></span></summary>
+              <div class="faq-answer"><p>Git2Tweet is free. Your model provider may have limits or charges, and Groq has a free tier with rate limits.</p></div>
+            </details>
+            <details class="faq-item reveal">
+              <summary><span>Why was my commit skipped?</span><span class="faq-toggle" aria-hidden="true"></span></summary>
+              <div class="faq-answer"><p>The agent judges the diff, so tiny or trivial changes are skipped. It tells you why. Run <code>git tweet --no-skip</code> to draft anyway.</p></div>
+            </details>
+            <details class="faq-item reveal">
+              <summary><span>Do I need GitHub?</span><span class="faq-toggle" aria-hidden="true"></span></summary>
+              <div class="faq-answer"><p>No. It works with any local git repo.</p></div>
+            </details>
+            <details class="faq-item reveal">
+              <summary><span>Does it work in VS Code or other editors?</span><span class="faq-toggle" aria-hidden="true"></span></summary>
+              <div class="faq-answer"><p>Yes. The reminder hook runs on any commit, but some editors hide hook output, so run <code>git tweet</code> in a terminal.</p></div>
+            </details>
+            <details class="faq-item reveal">
+              <summary><span>Which operating systems?</span><span class="faq-toggle" aria-hidden="true"></span></summary>
+              <div class="faq-answer"><p>Developed on Windows and checked on Linux. macOS hasn’t been tested yet.</p></div>
+            </details>
+            <details class="faq-item reveal">
+              <summary><span>Does it collect data?</span><span class="faq-toggle" aria-hidden="true"></span></summary>
+              <div class="faq-answer"><p>No telemetry.</p></div>
+            </details>
+            <details class="faq-item reveal">
+              <summary><span>Can it post to LinkedIn or Bluesky?</span><span class="faq-toggle" aria-hidden="true"></span></summary>
+              <div class="faq-answer"><p>Not yet. Suggestions are welcome on GitHub.</p></div>
+            </details>
+            <details class="faq-item reveal">
+              <summary><span>Found a bug?</span><span class="faq-toggle" aria-hidden="true"></span></summary>
+              <div class="faq-answer"><p>Open an issue on GitHub.</p></div>
+            </details>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <a class="brand" href="#top" aria-label="Git2Tweet home">
+            <svg width="26" height="26" viewBox="0 0 28 28" aria-hidden="true">
+              <rect width="28" height="28" rx="7" fill="var(--accent)"></rect>
+              <path d="M8 9.5 12.5 14 8 18.5" fill="none" stroke="var(--accent-ink)" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"></path>
+              <path d="M14.5 18.5H20" fill="none" stroke="var(--accent-ink)" stroke-width="2.1" stroke-linecap="round"></path>
+            </svg>
+            <span>git2tweet</span>
+          </a>
+          <p>Turn your commits into tweets.</p>
+        </div>
+
+        <nav class="footer-nav" aria-label="Footer">
+          <a href="#how">How it works</a>
+          <a href="#features">Features</a>
+          <a href="#install">Install</a>
+          <a href="#faq">FAQ</a>
+          <a href="https://github.com/Vex-15/git2tweet" target="_blank" rel="noopener noreferrer">GitHub</a>
+          <a href="https://pypi.org/project/git2tweet/" target="_blank" rel="noopener noreferrer">PyPI</a>
+          <a href="https://opensource.org/license/mit" target="_blank" rel="noopener noreferrer">MIT license</a>
+        </nav>
+      </div>
+
+      <div class="footer-bottom">
+        <a href="#top">Back to top ↑</a>
+        <span class="visit-chip" data-visit-chip title="Anonymous visit count powered by Abacus">
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 20h18M6 16v4M12 11v9M18 6v14"></path>
+          </svg>
+          <span>Site visits</span>
+          <strong data-visit-count>—</strong>
+          <span class="sr-only">Anonymous visit count powered by Abacus.</span>
+        </span>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<p id="copy-status" class="sr-only" role="status" aria-live="polite"></p>
+
+<noscript>
+  <style>
+    .copy-btn, .theme-toggle, .tablist, [data-visit-chip] { display: none !important; }
+    .tabpanel[hidden] { display: block !important; margin-top: 0.9rem; }
+  </style>
+</noscript>
+
+<script>
+  setTimeout(function () {
+    if (!window.__g2tReady) document.documentElement.classList.remove("js");
+  }, 1200);
+</script>
+<script src="script.js" defer></script>
+</body>
+</html>
