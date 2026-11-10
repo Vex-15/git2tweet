@@ -1,8 +1,17 @@
 [project]
 name = "git2tweet"
-version = "0.1.0"
+version = "0.1.1"
 description = "Turn your git commits into tweet drafts with an AI agent and human approval"
 readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+keywords = ["git", "twitter", "x", "llm", "cli", "build-in-public"]
+classifiers = [
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Topic :: Software Development :: Version Control :: Git",
+]
 authors = [
     { name = "Vedant", email = "vkowdiki@gmail.com" }
 ]
@@ -14,6 +23,10 @@ dependencies = [
     "platformdirs>=4.12.4",
     "python-dotenv>=1.2.4",
 ]
+
+[project.urls]
+Homepage = "https://github.com/Vex-15/git2tweet"
+Issues = "https://github.com/Vex-15/git2tweet/issues"
 
 [project.scripts]
 git2tweet = "git2tweet.cli:main"

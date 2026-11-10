@@ -1,6 +1,13 @@
 import subprocess
+from pathlib import Path
 
 from .scrub import scrub
+
+# Files whose diffs are never sent to the model.
+SENSITIVE_GLOBS = [
+    ".env", ".env.*", "*.pem", "*.key", "*.p12", "*.pfx",
+    "id_rsa*", "id_ed25519*", ".npmrc", ".pypirc", "*.tfstate",
+]
 
 
 def _git(*args: str) -> str:
@@ -19,8 +26,8 @@ def resolve(ref: str = "HEAD") -> str:
 
 def list_commits(n: int = 3) -> list[dict]:
     out = _git("log", f"-{n}", "--pretty=format:%H%x09%s")
-    rows = [line.split("\t", 1) for line in out.splitlines()]
-    return [{"sha": sha, "message": scrub(msg)} for sha, msg in rows]
+    rows = [line.partition("\t") for line in out.splitlines()]
+    return [{"sha": sha, "message": scrub(msg)} for sha, _, msg in rows]
 
 
 def commit_message(sha: str) -> str:
@@ -28,10 +35,12 @@ def commit_message(sha: str) -> str:
 
 
 def commit_diff(sha: str, max_chars: int = 6000) -> str:
-    return scrub(_git("show", "--format=", "--patch", sha))[:max_chars]
+    excludes = [f":(exclude,glob)**/{g}" for g in SENSITIVE_GLOBS]
+    patch = _git("show", "--format=", "--patch", sha, "--", ".", *excludes)
+    if not patch.strip():
+        return "(no diff to show: empty commit, or only files hidden for privacy)"
+    return scrub(patch)[:max_chars]
 
-
-from pathlib import Path
 
 def git_dir() -> Path:
     """The repo's .git folder (works from any subfolder, worktrees too)."""

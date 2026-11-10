@@ -3,9 +3,5 @@
 posted.json
 __pycache__/
 *.pyc
-dist/.venv/
-.env
-posted.json
-__pycache__/
-*.pyc
 dist/
+.pytest_cache/

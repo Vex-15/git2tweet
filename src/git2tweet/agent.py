@@ -18,8 +18,9 @@ SYSTEM = """You write tweets for a developer who builds in public.
 Look at the recent commits, pick the most tweet-worthy one, read its diff,
 then write ONE tweet under 280 characters (first person, casual, max 1 emoji,
 max 2 hashtags, never include secrets).
-If every commit is trivial (typos, formatting, merges), reply with exactly: SKIP
-Output only the tweet text or SKIP."""
+If every commit is trivial (typos, formatting, tiny test edits, merges), reply with
+exactly: SKIP: <reason in under 10 words>
+Output only the tweet text or the SKIP line."""
 
 
 @tool
@@ -41,14 +42,29 @@ class State(TypedDict):
     messages: Annotated[list, add_messages]
     tweet: str
     status: str
+    reason: str
+
+
+def _text(message) -> str:
+    """Message text as a plain string (some providers return a list of parts)."""
+    content = message.content
+    if isinstance(content, list):
+        content = "".join(
+            part if isinstance(part, str) else part.get("text", "") for part in content
+        )
+    return content.strip()
 
 
 def approve(state: State):
-    draft = state["messages"][-1].content.strip()
-    if draft.strip(" .\"'").upper() == "SKIP":
-        return {"status": "skipped"}
+    draft = _text(state["messages"][-1])
+    if draft.upper().startswith("SKIP:") or draft.strip(" .\"'").upper() == "SKIP":
+        reason = draft.split(":", 1)[1].strip() if ":" in draft else ""
+        return {"status": "skipped", "reason": reason}
 
     answer = interrupt({"draft": draft, "chars": len(draft)}).strip()
+
+    if not answer:  # just pressing Enter cancels; it never posts an empty tweet
+        return {"status": "cancelled"}
 
     if answer.lower() == "y":
         return {"tweet": draft, "status": "approved"}
@@ -92,25 +108,37 @@ def build_graph():
     return builder.compile(checkpointer=MemorySaver())
 
 
-def run(sha: str) -> None:
-    if sha in store.load():
+def run(sha: str, force: bool = False, no_skip: bool = False) -> None:
+    if not force and sha in store.load():
         print(f"Already handled {sha[:7]}, skipping.")
         return
 
     graph = build_graph()
     config = {"configurable": {"thread_id": sha}, "recursion_limit": 10}
     task = f"Write a tweet about commit {sha}. Read its diff with get_commit_diff first."
+    if no_skip:
+        task += " Never reply SKIP; write the best tweet you can even if the change is small."
 
     result = graph.invoke({"messages": [HumanMessage(task)]}, config)
 
     while "__interrupt__" in result:
         info = result["__interrupt__"][0].value
         print(f"\nDRAFT ({info['chars']} chars):\n{info['draft']}\n")
-        answer = input("Post? [y] yes / [n] no / or type your edited tweet: ")
+        while True:
+            answer = input("Post? [y]es / [n]o (don't ask again) / Enter to cancel / or type an edit: ").strip()
+            if answer.lower() in ("y", "n", "") or len(answer) <= 280:
+                break
+            print(f"That edit is {len(answer)} characters (the limit is 280). Try again.")
         result = graph.invoke(Command(resume=answer), config)
 
     status = result["status"]
-    print("Status:", status)
+    if status == "skipped":
+        print(f"Skipped: {result.get('reason') or 'it looked too small to tweet about'}.")
+        print("Run `git tweet --no-skip` to draft it anyway.")
+    elif status == "cancelled":
+        print("Cancelled. Nothing was posted.")
+    else:
+        print("Status:", status)
 
     if status == "opened":
         if input("Did you press Post on X? [y/n] ").lower() == "y":
