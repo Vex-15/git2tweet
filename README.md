@@ -81,6 +81,16 @@ Override per run with `GIT2TWEET_PROVIDER` and `GIT2TWEET_MODEL` environment var
 Issues and ideas are welcome, especially other platforms (LinkedIn, Bluesky, Mastodon)
 and tone presets for drafts.
 
+## Uninstall
+
+```bash
+git2tweet init --remove          # in each repo where you ran init
+uv tool uninstall git2tweet      # or: pipx uninstall git2tweet
+```
+
+Then delete your config folder (`git2tweet config --show` prints its path) and revoke
+your API key with your provider.
+
 ## License
 
 [MIT](https://github.com/Vex-15/git2tweet/blob/main/LICENSE)
