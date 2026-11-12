@@ -5,6 +5,7 @@
 [![PyPI](https://img.shields.io/pypi/v/git2tweet)](https://pypi.org/project/git2tweet/)
 [![Python](https://img.shields.io/pypi/pyversions/git2tweet)](https://pypi.org/project/git2tweet/)
 [![License](https://img.shields.io/github/license/Vex-15/git2tweet)](https://github.com/Vex-15/git2tweet/blob/main/LICENSE)
+[![PyPI Downloads](https://static.pepy.tech/personalized-badge/git2tweet?period=total&units=INTERNATIONAL_SYSTEM&left_color=BLACK&right_color=GREEN&left_text=downloads)](https://pepy.tech/projects/git2tweet)
 [![Stars](https://img.shields.io/github/stars/Vex-15/git2tweet?style=social)](https://github.com/Vex-15/git2tweet)
 
 ![demo](https://raw.githubusercontent.com/Vex-15/git2tweet/main/docs/demo.gif)
