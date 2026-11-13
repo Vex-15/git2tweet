@@ -284,6 +284,9 @@
      ------------------------------------------------------------------ */
   var starLink = document.querySelector("[data-gh-link]");
   var starValue = document.querySelector("[data-gh-stars]");
+  var heroStarLink = document.querySelector("[data-hero-star-link]");
+  var heroStarValue = document.querySelector("[data-hero-stars]");
+  var heroStarLabel = document.querySelector("[data-hero-star-label]");
   var starCache;
   var starCacheFresh = false;
 
@@ -298,12 +301,27 @@
   }
 
   function renderStars(value) {
-    if (!starValue || !Number.isFinite(value)) return;
-    starValue.textContent = formatCount(value);
+    if (!Number.isFinite(value)) return;
+
+    var starsLabel = value.toLocaleString("en") + (value === 1 ? " star" : " stars");
+    if (starValue) starValue.textContent = formatCount(value);
     if (starLink) {
-      var starsLabel = value.toLocaleString("en") + (value === 1 ? " star" : " stars");
       starLink.setAttribute("aria-label", "GitHub repository, " + starsLabel);
       starLink.title = "GitHub · " + starsLabel;
+    }
+
+    if (heroStarValue && heroStarLabel) {
+      if (value === 0) {
+        heroStarValue.hidden = true;
+        heroStarLabel.textContent = "Be the first to star Git2Tweet on GitHub";
+      } else {
+        heroStarValue.hidden = false;
+        heroStarValue.textContent = formatCount(value);
+        heroStarLabel.textContent = (value === 1 ? "star" : "stars") + " on GitHub · add yours";
+        if (heroStarLink) {
+          heroStarLink.setAttribute("aria-label", "Star Git2Tweet on GitHub, " + starsLabel + " so far");
+        }
+      }
     }
   }
 
@@ -349,6 +367,89 @@
       })
       .finally(function () {
         window.clearTimeout(starTimeout);
+      });
+  }
+
+  /* ------------------------------------------------------------------
+     Total PyPI downloads (ClickPy public ClickHouse endpoint)
+     ------------------------------------------------------------------ */
+  var downloadLink = document.querySelector("[data-pypi-download]");
+  var downloadValue = document.querySelector("[data-pypi-downloads]");
+
+  function parseDownloadCount(message) {
+    if (typeof message !== "string") return NaN;
+    var match = message.trim().toLowerCase().replace(/,/g, "").match(/^(\d+(?:\.\d+)?)([km])?$/);
+    if (!match) return NaN;
+    var value = Number(match[1]);
+    if (match[2] === "k") value *= 1000;
+    else if (match[2] === "m") value *= 1000000;
+    return value;
+  }
+
+  function renderDownloads(value) {
+    if (!downloadValue || !Number.isFinite(value)) return;
+    downloadValue.textContent = formatCount(value);
+    if (downloadLink) {
+      downloadLink.setAttribute("aria-label", value.toLocaleString("en") + " total PyPI downloads");
+      downloadLink.title = "Total PyPI downloads (via ClickPy)";
+    }
+  }
+
+  var downloadCache = null;
+  var downloadCacheFresh = false;
+
+  try {
+    var cachedDownloads = localStorage.getItem("g2t-clickpy-downloads");
+    if (cachedDownloads) {
+      downloadCache = JSON.parse(cachedDownloads);
+      if (downloadCache && Number.isFinite(Number(downloadCache.value))) {
+        renderDownloads(Number(downloadCache.value));
+        downloadCacheFresh =
+          Number(downloadCache.saved) &&
+          Date.now() - Number(downloadCache.saved) < 30 * 60 * 1000;
+      }
+    }
+  } catch (error) {
+    downloadCache = null;
+  }
+
+  if (window.fetch && downloadValue && !downloadCacheFresh) {
+    var downloadController = window.AbortController ? new AbortController() : null;
+    var downloadTimeout = window.setTimeout(function () {
+      if (downloadController) downloadController.abort();
+    }, 8000);
+
+    var clickpyQuery =
+      "SELECT sum(count) AS downloads FROM pypi.pypi_downloads_per_day " +
+      "WHERE project = 'git2tweet' FORMAT JSON";
+
+    fetch(
+      "https://sql-clickhouse.clickhouse.com/?user=demo&query=" + encodeURIComponent(clickpyQuery),
+      { signal: downloadController ? downloadController.signal : undefined }
+    )
+      .then(function (response) {
+        if (!response.ok) throw new Error("Downloads request failed");
+        return response.json();
+      })
+      .then(function (data) {
+        var row = data && data.data && data.data[0];
+        var count = parseDownloadCount(String(row && row.downloads));
+        if (!Number.isFinite(count)) return;
+        renderDownloads(count);
+        try {
+          localStorage.setItem(
+            "g2t-clickpy-downloads",
+            JSON.stringify({ value: count, saved: Date.now() })
+          );
+        } catch (error) {
+          /* cache is optional */
+        }
+      })
+      .catch(function () {
+        /* Keep the cached value, or the dash fallback. */
+      })
+      .finally(function () {
+        window.clearTimeout(downloadTimeout);
       });
   }
 

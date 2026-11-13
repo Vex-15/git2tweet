@@ -344,7 +344,8 @@ a { color: var(--accent); text-underline-offset: 0.18em; }
   margin-left: auto;
 }
 
-.gh-stars {
+.gh-stars,
+.pypi-downloads {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -361,13 +362,16 @@ a { color: var(--accent); text-underline-offset: 0.18em; }
   text-decoration: none;
   transition: color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
 }
-.gh-stars svg { width: 14px; height: 14px; color: var(--accent); flex: none; }
-.gh-stars:hover {
+.gh-stars svg,
+.pypi-downloads svg { width: 14px; height: 14px; color: var(--accent); flex: none; }
+.gh-stars:hover,
+.pypi-downloads:hover {
   color: var(--text);
   border-color: var(--accent-line);
   transform: translateY(-1px);
 }
-.gh-stars-value { min-width: 2.5em; text-align: center; }
+.gh-stars-value,
+.pypi-downloads-value { min-width: 2.5em; text-align: center; }
 
 .icon-btn {
   display: grid;
@@ -644,6 +648,27 @@ a { color: var(--accent); text-underline-offset: 0.18em; }
 .copy-btn.copied .copy-copy { display: none; }
 .copy-btn.copied .copy-check { display: block; }
 
+.hero-star-line {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin: -0.15rem auto 1.2rem;
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.4;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+.hero-star-line:hover { color: var(--accent); }
+.hero-star-glyph { width: 14px; height: 14px; flex: none; color: var(--accent); }
+.hero-star-line-count { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+.hero-star-line-arrow {
+  color: var(--accent);
+  transition: transform 0.2s ease;
+}
+.hero-star-line:hover .hero-star-line-arrow { transform: translateX(2px); }
+
 .hero-actions {
   display: flex;
   flex-wrap: wrap;
@@ -717,12 +742,13 @@ a { color: var(--accent); text-underline-offset: 0.18em; }
   background: #000000;
 }
 
-.hero-kicker, .hero h1, .lede, .install-box, .hero-actions, .demo-wrap {
+.hero-kicker, .hero h1, .lede, .install-box, .hero-star-line, .hero-actions, .demo-wrap {
   animation: hero-rise 0.85s cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 .hero h1 { animation-delay: 0.06s; }
 .lede { animation-delay: 0.12s; }
 .install-box { animation-delay: 0.18s; }
+.hero-star-line { animation-delay: 0.21s; }
 .hero-actions { animation-delay: 0.24s; }
 .demo-wrap { animation-delay: 0.3s; }
 
@@ -1362,6 +1388,56 @@ code {
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* ---------- Star callout ---------- */
+
+.star-cta {
+  position: relative;
+  padding-block: clamp(10px, 2vw, 20px) clamp(48px, 7vw, 88px);
+}
+
+.star-cta-inner {
+  display: flex;
+  align-items: center;
+  gap: clamp(1rem, 2.4vw, 1.5rem);
+  padding: clamp(1.15rem, 2.6vw, 1.6rem) clamp(1.2rem, 3vw, 2rem);
+  border: 1px solid var(--accent-line);
+  border-radius: 20px;
+  background:
+    radial-gradient(90% 130% at 0% 0%, var(--accent-soft), transparent 58%),
+    linear-gradient(145deg, var(--surface), color-mix(in srgb, var(--surface-2) 32%, var(--surface)));
+  box-shadow: 0 34px 90px -72px var(--shadow);
+}
+
+.star-cta-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 42px; height: 42px;
+  border: 1px solid var(--accent-line);
+  border-radius: 13px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.star-cta-icon svg { width: 19px; height: 19px; }
+.star-cta-copy { min-width: 0; }
+.star-cta-copy h2 {
+  margin: 0;
+  font-size: clamp(1.2rem, 2.4vw, 1.5rem);
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+.star-cta-copy p {
+  margin: 0.35rem 0 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+.star-cta-btn {
+  flex: none;
+  margin-left: auto;
+  padding: 0.72rem 1.1rem;
+  font-size: 0.86rem;
+}
+
 /* ---------- Footer ---------- */
 
 .site-footer {
@@ -1494,10 +1570,18 @@ code {
 }
 
 @media (max-width: 600px) {
-  .gh-stars-value { min-width: 0; }
+  .gh-stars-value,
+  .pypi-downloads-value { min-width: 0; }
   .header-inner { gap: 0.65rem; }
   .header-actions { gap: 0.35rem; }
-  .gh-stars { padding-inline: 0.6rem; }
+  .gh-stars,
+  .pypi-downloads { padding-inline: 0.6rem; }
+}
+
+@media (max-width: 640px) {
+  .star-cta-inner { flex-wrap: wrap; align-items: flex-start; }
+  .star-cta-copy { flex: 1 1 220px; }
+  .star-cta-btn { width: 100%; margin-left: 0; }
 }
 
 @media (max-width: 420px) {
